@@ -1,0 +1,52 @@
+---
+version: "3.5"
+
+services:
+  install_site:
+    build: install_site/
+    ports:
+      - "80:80"
+    environment:
+      - BASE_URL=$BASE_URL
+      - EMAIL=$EMAIL
+    volumes:
+      - ./nginx.conf:/web/nextcloud.conf
+      - sites-availables:/sites-availables
+      - certs:/etc/letsencrypt
+
+  db:
+    image: postgres
+    restart: always
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+
+  nextcloud:
+    build: image/
+    restart: always
+    volumes:
+      - /media:/media
+    environment:
+      - POSTGRES_HOST=$POSTGRES_HOST
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+    networks:
+      - selfhost
+    depends_on:
+      - db
+
+volumes:
+  db:
+  sites-availables:
+    external: true
+  certs:
+    external: true
+
+networks:
+  default:
+  selfhost:
+    external: true
